@@ -28,6 +28,10 @@ exports.up = function(db) {
       notNull: true,
       unique:true,
     },
+    email: {
+      type:'string',
+      unique:true,
+    },
     password: {
       type:'string',
     },

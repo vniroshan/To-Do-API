@@ -9,3 +9,30 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model users {
+  id    Int     @id @default(autoincrement())
+  mobile String @unique 
+  email String  @unique
+  name  String
+  password  String
+  type  String
+  mobile_verified_at DateTime? @db.Timestamptz(6)
+  created_at DateTime? @db.Timestamptz(6) @default(now())
+  updated_at DateTime? @db.Timestamptz(6)
+  delete_at DateTime? @db.Timestamptz(6)
+
+  notes notes[]
+}
+
+model notes {
+  id    Int     @id @default(autoincrement())
+  title  String
+  body  String
+  user_id Int
+  created_at DateTime? @db.Timestamptz(6) @default(now())
+  updated_at DateTime? @db.Timestamptz(6)
+  delete_at DateTime? @db.Timestamptz(6)
+
+  users   users   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "note_user_id_foreign")
+}

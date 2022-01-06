@@ -1,11 +1,14 @@
 "use strict";
 
 const table = "notes";
+const { PrismaClient } = require("@prisma/client");
+
+const prisma = new PrismaClient();
 module.exports = async function (fastify, opts, next) {
   fastify.route({
     method: "GET",
     url: "/notes",
-	
+
     // schema: {
     //   tags: ["Notes"],
     //   description: "Get all notes",
@@ -32,12 +35,20 @@ module.exports = async function (fastify, opts, next) {
     //   },
     // },
     handler: async (request, reply) => {
-      const client = await fastify.pg.connect();
-      const { rows } = await client.query(
-        "SELECT * FROM " + table + " ORDER BY id ASC"
-      );
-      client.release();
-      return rows;
+      // const client = await fastify.pg.connect();
+      // const { rows } = await client.query(
+      //   "SELECT * FROM " + table + " ORDER BY id ASC"
+      // );
+      // client.release();
+      try {
+        const notes = await prisma.notes.findMany({
+          include: {users: true},
+        });
+
+        return notes;
+      } catch (error) {
+        next(error)
+      }
     },
   });
 
@@ -46,14 +57,44 @@ module.exports = async function (fastify, opts, next) {
     url: "/notes/:id",
 
     handler: async (request, reply) => {
-      const client = await fastify.pg.connect();
       const { id } = request.params;
-      const { rows } = await client.query(
-        "SELECT * FROM " + table + " WHERE id = $1",
-        [id]
-      );
-      client.release();
-      return rows;
+      const note = await prisma.notes.findUnique({
+        where:{
+          id:Number(id),
+        }
+      })
+      return note;
+      // const client = await fastify.pg.connect();
+      // const { id } = request.params;
+      // const { rows } = await client.query(
+      //   "SELECT * FROM " + table + " WHERE id = $1",
+      //   [id]
+      // );
+      // client.release();
+      // return rows;
+    },
+  });
+
+  fastify.route({
+    method: "GET",
+    url: "/delete-notes/:id",
+
+    handler: async (request, reply) => {
+      const { id } = request.params;
+      const deleteNote = await prisma.notes.delete({
+        where:{
+          id:Number(id),
+        }
+      })
+      return deleteNote;
+      // const client = await fastify.pg.connect();
+      // const { id } = request.params;
+      // const { rows } = await client.query(
+      //   "SELECT * FROM " + table + " WHERE id = $1",
+      //   [id]
+      // );
+      // client.release();
+      // return rows;
     },
   });
 
@@ -91,13 +132,23 @@ module.exports = async function (fastify, opts, next) {
       },
     },
     handler: async (request, reply) => {
-      const client = await fastify.pg.connect();
-      const { rows } = await client.query(
-        "INSERT INTO " + table + " (title, body) VALUES ($1, $2) RETURNING *",
-        [request.body.title, request.body.body]
-      );
-      client.release();
-      return "sucess";
+      // const client = await fastify.pg.connect();
+      // const { rows } = await client.query(
+      //   "INSERT INTO " + table + " (title, body) VALUES ($1, $2) RETURNING *",
+      //   [request.body.title, request.body.body]
+      // );
+      // client.release();
+
+        const notes = await prisma.notes.create({
+          data:{
+           title: request.body.title,
+           body: request.body.body,
+           user_id: request.body.user_id
+          }
+        })
+
+        return notes;
+
     },
   });
 
@@ -109,7 +160,7 @@ module.exports = async function (fastify, opts, next) {
       description: "Update a note",
       body: {
         type: "object",
-        required: ["id","title", "body"],
+        required: ["id", "title", "body"],
         properties: {
           id: { type: "number" },
           title: { type: "string" },
