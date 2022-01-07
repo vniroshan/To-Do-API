@@ -1,10 +1,55 @@
 "use strict";
 
 const table = "notes";
+const bcrypt = require("bcrypt");
 const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
+
 module.exports = async function (fastify, opts, next) {
+  fastify.post("/generateAccessToken", async function (request, reply) {
+    const { email, password } = request.body;
+    if (!email || !password) {
+      return { error: true, msg: "Manadatory params are missing" };
+    }
+
+    const user = await prisma.users.findUnique({
+      where: {
+        email: email,
+      },
+    });
+
+    if (!user) {
+      return {
+        error: true,
+        msg: "invalid email address",
+      };
+    }
+    //  const hash = bcrypt.hashSync(password, 10);
+
+    //   return hash;
+    const validation = await bcrypt.compare(password, user.password);
+    if (!validation) {
+      return {
+        error: true,
+        msg: "invalid password.",
+      };
+    }
+    const token = fastify.jwt.sign({ email });
+    reply.send({ token, email });
+    //return({token , email})
+  });
+
+  fastify.get(
+    "/test",
+    {
+      preValidation: [fastify.authenticate],
+    },
+    async (request, response) => {
+      return "hiiii";
+    }
+  );
+
   fastify.route({
     method: "GET",
     url: "/notes",
@@ -40,14 +85,16 @@ module.exports = async function (fastify, opts, next) {
       //   "SELECT * FROM " + table + " ORDER BY id ASC"
       // );
       // client.release();
+
+      return "hii";
       try {
         const notes = await prisma.notes.findMany({
-          include: {users: true},
+          include: { users: true },
         });
 
         return notes;
       } catch (error) {
-        next(error)
+        next(error);
       }
     },
   });
@@ -56,13 +103,15 @@ module.exports = async function (fastify, opts, next) {
     method: "GET",
     url: "/notes/:id",
 
+    preValidation: fastify.authenticate,
+
     handler: async (request, reply) => {
       const { id } = request.params;
       const note = await prisma.notes.findUnique({
-        where:{
-          id:Number(id),
-        }
-      })
+        where: {
+          id: Number(id),
+        },
+      });
       return note;
       // const client = await fastify.pg.connect();
       // const { id } = request.params;
@@ -82,10 +131,10 @@ module.exports = async function (fastify, opts, next) {
     handler: async (request, reply) => {
       const { id } = request.params;
       const deleteNote = await prisma.notes.delete({
-        where:{
-          id:Number(id),
-        }
-      })
+        where: {
+          id: Number(id),
+        },
+      });
       return deleteNote;
       // const client = await fastify.pg.connect();
       // const { id } = request.params;
@@ -139,16 +188,15 @@ module.exports = async function (fastify, opts, next) {
       // );
       // client.release();
 
-        const notes = await prisma.notes.create({
-          data:{
-           title: request.body.title,
-           body: request.body.body,
-           user_id: request.body.user_id
-          }
-        })
+      const notes = await prisma.notes.create({
+        data: {
+          title: request.body.title,
+          body: request.body.body,
+          user_id: request.body.user_id,
+        },
+      });
 
-        return notes;
-
+      return notes;
     },
   });
 
