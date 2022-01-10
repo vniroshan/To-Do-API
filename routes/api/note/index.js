@@ -53,32 +53,11 @@ module.exports = async function (fastify, opts, next) {
   fastify.route({
     method: "GET",
     url: "/notes",
-
-    // schema: {
-    //   tags: ["Notes"],
-    //   description: "Get all notes",
-    //   response: {
-    //     200: {
-    //       type: "array",
-    //       items: {
-    //         type: "object",
-    //         properties: {
-    //           id: {
-    //             type: "string",
-    //             description: "Unique identifier for a specific note.",
-    //           },
-    //           title: {
-    //             type: "string",
-    //           },
-    //           body: {
-    //             type: "string",
-    //             description: "Main content of the note.",
-    //           },
-    //         },
-    //       },
-    //     },
-    //   },
-    // },
+    preValidation: [fastify.authenticate],
+    schema: {
+      tags: ["Notes"],
+      description: "Get all notes",
+    },
     handler: async (request, reply) => {
       // const client = await fastify.pg.connect();
       // const { rows } = await client.query(
@@ -86,7 +65,6 @@ module.exports = async function (fastify, opts, next) {
       // );
       // client.release();
 
-      return "hii";
       try {
         const notes = await prisma.notes.findMany({
           include: { users: true },
