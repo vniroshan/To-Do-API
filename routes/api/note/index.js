@@ -7,6 +7,13 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 module.exports = async function (fastify, opts, next) {
+  fastify.get("/set-cookie", (req, reply) => {
+    
+
+    // Setting the same cookie again, this time plugin will sign it with a new key
+    reply.setCookie("myCookie","newUser").send("Cookie sent");
+  });
+
   fastify.post("/generateAccessToken", async function (request, reply) {
     const { email, password } = request.body;
     if (!email || !password) {
@@ -104,7 +111,7 @@ module.exports = async function (fastify, opts, next) {
 
   fastify.route({
     method: "GET",
-    url: "/delete-notes/:id",
+    url: "/delete-note/:id",
 
     handler: async (request, reply) => {
       const { id } = request.params;
@@ -113,7 +120,7 @@ module.exports = async function (fastify, opts, next) {
           id: Number(id),
         },
       });
-      return deleteNote;
+      return { message: "Success" };
       // const client = await fastify.pg.connect();
       // const { id } = request.params;
       // const { rows } = await client.query(
@@ -131,32 +138,32 @@ module.exports = async function (fastify, opts, next) {
     schema: {
       tags: ["Notes"],
       description: "Create a note",
-      body: {
-        type: "object",
-        required: ["title", "body"],
-        properties: {
-          title: { type: "string" },
-          body: { type: "string" },
-        },
-      },
-      response: {
-        200: {
-          type: "object",
-          properties: {
-            id: {
-              type: "number",
-              description: "Unique identifier for a specific note.",
-            },
-            title: {
-              type: "string",
-            },
-            body: {
-              type: "string",
-              description: "Main content of the note.",
-            },
-          },
-        },
-      },
+      // body: {
+      //   type: "object",
+      //   required: ["title", "body"],
+      //   properties: {
+      //     title: { type: "string" },
+      //     body: { type: "string" },
+      //   },
+      // },
+      // response: {
+      //   200: {
+      //     type: "object",
+      //     properties: {
+      //       id: {
+      //         type: "number",
+      //         description: "Unique identifier for a specific note.",
+      //       },
+      //       title: {
+      //         type: "string",
+      //       },
+      //       body: {
+      //         type: "string",
+      //         description: "Main content of the note.",
+      //       },
+      //     },
+      //   },
+      // },
     },
     handler: async (request, reply) => {
       // const client = await fastify.pg.connect();
@@ -174,7 +181,7 @@ module.exports = async function (fastify, opts, next) {
         },
       });
 
-      return notes;
+      return { message: "Success" };
     },
   });
 
@@ -184,33 +191,33 @@ module.exports = async function (fastify, opts, next) {
     schema: {
       tags: ["Notes"],
       description: "Update a note",
-      body: {
-        type: "object",
-        required: ["id", "title", "body"],
-        properties: {
-          id: { type: "number" },
-          title: { type: "string" },
-          body: { type: "string" },
-        },
-      },
-      response: {
-        200: {
-          type: "object",
-          properties: {
-            id: {
-              type: "number",
-              description: "Unique identifier for a specific note.",
-            },
-            title: {
-              type: "string",
-            },
-            body: {
-              type: "string",
-              description: "Main content of the note.",
-            },
-          },
-        },
-      },
+      // body: {
+      //   type: "object",
+      //   required: ["id", "title", "body"],
+      //   properties: {
+      //     id: { type: "number" },
+      //     title: { type: "string" },
+      //     body: { type: "string" },
+      //   },
+      // },
+      // response: {
+      //   200: {
+      //     type: "object",
+      //     properties: {
+      //       id: {
+      //         type: "number",
+      //         description: "Unique identifier for a specific note.",
+      //       },
+      //       title: {
+      //         type: "string",
+      //       },
+      //       body: {
+      //         type: "string",
+      //         description: "Main content of the note.",
+      //       },
+      //     },
+      //   },
+      // },
     },
     handler: async (request, reply) => {
       const client = await fastify.pg.connect();
@@ -221,7 +228,7 @@ module.exports = async function (fastify, opts, next) {
         [request.body.title, request.body.body, request.body.id]
       );
       client.release();
-      return "sucess";
+      return { message: "Success" };
     },
   });
 
